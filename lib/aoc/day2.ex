@@ -31,8 +31,8 @@ defmodule AOC.Day2 do
 
   def simulate(inp, noun, verb) when is_list(inp) do
     inp
-    |> List.replace_at(1, noun)
-    |> List.replace_at(2, verb)
+    |> replace_at(1, noun)
+    |> replace_at(2, verb)
     |> List.to_tuple()
     |> simulate(0, {})
   end
@@ -56,12 +56,7 @@ defmodule AOC.Day2 do
 
       {dest, {op, a, b}} ->
         val = op.(elem(tape, a), elem(tape, b))
-
-        tape =
-          tape
-          |> Tuple.delete_at(dest)
-          |> Tuple.insert_at(dest, val)
-
+        tape = replace_at(tape, dest, val)
         simulate(tape, idx + 1, {})
     end
   end
