@@ -12,15 +12,7 @@ defmodule AOC do
       def input(splitter), do: String.split(input(), splitter, trim: true)
       def input(splitter, parser), do: Enum.map(input(splitter), parser)
 
-      import AOC
+      import AOC.Utils
     end
-  end
-
-  def replace_at(list, idx, x) when is_list(list), do: List.replace_at(list, idx, x)
-
-  def replace_at(tuple, idx, x) when is_tuple(tuple) do
-    tuple
-    |> Tuple.delete_at(idx)
-    |> Tuple.insert_at(idx, x)
   end
 end
