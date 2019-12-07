@@ -11,6 +11,8 @@ defmodule AOC.Day2 do
   """
   def part1(inp \\ default()) do
     Intcode.simulate(inp, 12, 2)
+    |> Map.get(:tape)
+    |> elem(0)
   end
 
   @doc """
@@ -24,6 +26,13 @@ defmodule AOC.Day2 do
     # - Incrementing the verb increments the output
     noun = 82
     verb = 50
-    {Intcode.simulate(inp, noun, verb), 100 * noun + verb}
+
+    output =
+      inp
+      |> Intcode.simulate(noun, verb)
+      |> Map.get(:tape)
+      |> elem(0)
+
+    {output, 100 * noun + verb}
   end
 end
