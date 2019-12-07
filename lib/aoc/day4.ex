@@ -13,7 +13,7 @@ defmodule AOC.Day4 do
   def part1(inp \\ default()) do
     inp
     |> Enum.map(&Integer.digits/1)
-    |> Enum.count(&(has_double(&1) and is_increasing(&1)))
+    |> Enum.count(&(double?(&1) and increasing?(&1)))
   end
 
   @doc """
@@ -23,16 +23,16 @@ defmodule AOC.Day4 do
   def part2(inp \\ default()) do
     inp
     |> Enum.map(&Integer.digits/1)
-    |> Enum.count(&(has_double(&1, :strict) and is_increasing(&1)))
+    |> Enum.count(&(double?(&1, :strict) and increasing?(&1)))
   end
 
-  defp has_double(digits), do: length(Enum.uniq(digits)) != length(digits)
+  defp double?(digits), do: length(Enum.uniq(digits)) != length(digits)
 
-  defp has_double(digits, :strict) do
+  defp double?(digits, :strict) do
     digits
     |> Enum.uniq()
     |> Enum.any?(fn d -> Enum.count(digits, &(d == &1)) == 2 end)
   end
 
-  defp is_increasing(digits), do: Enum.sort(digits) == digits
+  defp increasing?(digits), do: Enum.sort(digits) == digits
 end
