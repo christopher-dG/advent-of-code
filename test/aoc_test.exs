@@ -3,4 +3,5 @@ defmodule AOCTest do
   doctest AOC.Day1
   doctest AOC.Day2
   doctest AOC.Day3
+  doctest AOC.Day4
 end
