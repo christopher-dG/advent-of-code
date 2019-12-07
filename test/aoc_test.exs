@@ -1,9 +1,13 @@
 defmodule AOCTest do
   use ExUnit.Case
-  doctest AOC.Day1
-  doctest AOC.Day2
-  doctest AOC.Day3
-  doctest AOC.Day4
-  doctest AOC.Day5
-  doctest AOC.Day6
+
+  Enum.each(1..25, fn day ->
+    try do
+      Module.safe_concat(AOC, "Day#{day}")
+    rescue
+      _e -> :noop
+    else
+      mod -> doctest mod
+    end
+  end)
 end
