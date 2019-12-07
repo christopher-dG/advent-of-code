@@ -39,8 +39,8 @@ defmodule AOC.Intcode do
         program
 
       [0, b_mode, a_mode, 0, op] when op in [@add, @mul] ->
-        a = load(tape, a_mode, elem(tape, ip + 1))
-        b = load(tape, b_mode, elem(tape, ip + 2))
+        a = load(tape, a_mode, ip + 1)
+        b = load(tape, b_mode, ip + 2)
         dest = elem(tape, ip + 3)
 
         f =
@@ -60,17 +60,16 @@ defmodule AOC.Intcode do
         simulate(%{program | tape: tape, ip: ip + 2, inputs: inputs})
 
       [_, _, mode, 0, @output] ->
-        src = elem(tape, ip + 1)
-        out = load(tape, mode, src)
+        out = load(tape, mode, ip + 1)
         outputs = [out | outputs]
         simulate(%{program | ip: ip + 2, outputs: outputs})
 
-      [_, jump_mode, branch_mode, 0, op] when op in [@if, @unless] ->
-        branch = load(tape, branch_mode, ip + 1)
+      [_, branch_mode, val_mode, 0, op] when op in [@if, @unless] ->
+        val = load(tape, val_mode, ip + 1)
 
-        if (op == @if and branch) || (op == @unless and !branch) do
-          jump = load(tape, jump_mode, ip + 2)
-          simulate(%{program | ip: jump})
+        if (op == @if and val != 0) or (op == @unless and val == 0) do
+          branch = load(tape, branch_mode, ip + 2)
+          simulate(%{program | ip: branch})
         else
           simulate(%{program | ip: ip + 3})
         end
@@ -79,14 +78,14 @@ defmodule AOC.Intcode do
         a = load(tape, a_mode, ip + 1)
         b = load(tape, b_mode, ip + 2)
         dest = elem(tape, ip + 3)
-        val = if (op == @lt and a < b) || (op == @eq and a == b), do: 1, else: 0
+        val = if (op == @lt and a < b) or (op == @eq and a == b), do: 1, else: 0
         tape = store(tape, dest, val)
         simulate(%{program | tape: tape, ip: ip + 4})
     end
   end
 
-  defp load(tape, 0, idx), do: elem(tape, idx)
-  defp load(_tape, 1, val), do: val
+  defp load(tape, 0, idx), do: elem(tape, elem(tape, idx))
+  defp load(tape, 1, idx), do: elem(tape, idx)
 
   defp store(tape, idx, val), do: replace_at(tape, idx, val)
 

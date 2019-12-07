@@ -17,7 +17,7 @@ defmodule AOC.Day5 do
 
   @doc """
       iex> AOC.Day5.part2
-      0
+      652726
   """
   def part2(inp \\ default()) do
     Intcode.simulate(inp, [5])
