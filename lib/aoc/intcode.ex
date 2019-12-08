@@ -1,6 +1,8 @@
 defmodule AOC.Intcode do
   @moduledoc "Intcode simulator."
 
+  use GenServer
+
   import AOC.Utils
 
   @add 1
@@ -13,21 +15,40 @@ defmodule AOC.Intcode do
   @eq 8
   @stop 9
 
-  def simulate(tape, inputs) when is_list(tape) and is_list(inputs) do
-    program = %{tape: List.to_tuple(tape), ip: 0, inputs: inputs, outputs: []}
-    simulate(program)
+  @doc "Creates a new Intcode computer."
+  def new(tape) do
+    {:ok, pid} = start_link(tape)
+    pid
   end
 
-  def simulate(tape, noun, verb) when is_list(tape) and is_integer(noun) and is_integer(verb) do
-    tape
-    |> replace_at(1, noun)
-    |> replace_at(2, verb)
-    |> simulate()
+  @doc "Runs the computer's tape."
+  def run(pid) do
+    GenServer.cast(pid, :run)
+    pid
   end
 
-  def simulate(tape) when is_list(tape), do: simulate(tape, [])
+  @doc "Subscribes someone to the computer's events."
+  def subscribe(pid, subscribers) do
+    GenServer.cast(pid, {:subscribe, subscribers})
+    pid
+  end
 
-  def simulate(%{tape: tape, ip: ip, inputs: inputs, outputs: outputs} = program) do
+  @doc "Sends input to the computer."
+  def input(pid, val) do
+    GenServer.cast(pid, {:input, val})
+    pid
+  end
+
+  def start_link(tape) do
+    GenServer.start_link(__MODULE__, tape)
+  end
+
+  def init(tape) do
+    ic = %{tape: List.to_tuple(tape), subscribers: MapSet.new(), ip: 0, inputs: [], sleeping: false}
+    {:ok, ic}
+  end
+
+  def handle_cast(:run, %{tape: tape, subscribers: subscribers, ip: ip, inputs: inputs} = ic) do
     opcode =
       tape
       |> elem(ip)
@@ -36,7 +57,8 @@ defmodule AOC.Intcode do
 
     case opcode do
       [0, 0, 0, @stop, @stop] ->
-        program
+        GenServer.cast(self(), :stop)
+        {:noreply, ic}
 
       [0, b_mode, a_mode, 0, op] when op in [@add, @mul] ->
         a = load(tape, a_mode, ip + 1)
@@ -51,28 +73,39 @@ defmodule AOC.Intcode do
 
         val = f.(a, b)
         tape = store(tape, dest, val)
-        simulate(%{program | tape: tape, ip: ip + 4})
+        GenServer.cast(self(), :run)
+        {:noreply, %{ic | tape: tape, ip: ip + 4}}
 
       [_, _, 0, 0, @input] ->
-        dest = elem(tape, ip + 1)
-        [inp | inputs] = inputs
-        tape = store(tape, dest, inp)
-        simulate(%{program | tape: tape, ip: ip + 2, inputs: inputs})
+        case inputs do
+          [] ->
+            {:noreply, %{ic | sleeping: true}, :hibernate}
+
+          [val | rest] ->
+            dest = elem(tape, ip + 1)
+            tape = store(tape, dest, val)
+            GenServer.cast(self(), :run)
+            {:noreply, %{ic | tape: tape, ip: ip + 2, inputs: rest}}
+        end
 
       [_, _, mode, 0, @output] ->
         out = load(tape, mode, ip + 1)
-        outputs = [out | outputs]
-        simulate(%{program | ip: ip + 2, outputs: outputs})
+        Enum.each(subscribers, &send(&1, {:output, out}))
+        GenServer.cast(self(), :run)
+        {:noreply, %{ic | ip: ip + 2}}
 
       [_, branch_mode, val_mode, 0, op] when op in [@if, @unless] ->
         val = load(tape, val_mode, ip + 1)
 
-        if (op == @if and val != 0) or (op == @unless and val == 0) do
-          branch = load(tape, branch_mode, ip + 2)
-          simulate(%{program | ip: branch})
-        else
-          simulate(%{program | ip: ip + 3})
-        end
+        ip =
+          if (op == @if and val != 0) or (op == @unless and val == 0) do
+            load(tape, branch_mode, ip + 2)
+          else
+            ip + 3
+          end
+
+        GenServer.cast(self(), :run)
+        {:noreply, %{ic | ip: ip}}
 
       [0, b_mode, a_mode, 0, op] when op in [@lt, @eq] ->
         a = load(tape, a_mode, ip + 1)
@@ -80,8 +113,24 @@ defmodule AOC.Intcode do
         dest = elem(tape, ip + 3)
         val = if (op == @lt and a < b) or (op == @eq and a == b), do: 1, else: 0
         tape = store(tape, dest, val)
-        simulate(%{program | tape: tape, ip: ip + 4})
+        GenServer.cast(self(), :run)
+        {:noreply, %{ic | tape: tape, ip: ip + 4}}
     end
+  end
+
+  def handle_cast({:input, val}, %{inputs: inputs, sleeping: sleeping} = ic) do
+    sleeping && GenServer.cast(self(), :run)
+    {:noreply, %{ic | sleeping: false, inputs: inputs ++ [val]}}
+  end
+
+  def handle_cast({:subscribe, new_subs}, %{subscribers: current_subs} = ic) do
+    f = if is_list(new_subs), do: &MapSet.union/2, else: &MapSet.put/2
+    {:noreply, %{ic | subscribers: f.(current_subs, new_subs)}}
+  end
+
+  def handle_cast(:stop, %{subscribers: subscribers} = ic) do
+    Enum.each(subscribers, &send(&1, {:done, ic}))
+    {:noreply, ic}
   end
 
   defp load(tape, 0, idx), do: elem(tape, elem(tape, idx))
