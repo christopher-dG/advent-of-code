@@ -89,9 +89,6 @@ defmodule AOC.Intcode do
 
   defp store(tape, idx, val), do: replace_at(tape, idx, val)
 
-  defp pad(op) when length(op) == 5, do: op
-  defp pad(op) when length(op) == 4, do: [0 | op]
-  defp pad(op) when length(op) == 3, do: [0, 0 | op]
-  defp pad(op) when length(op) == 2, do: [0, 0, 0 | op]
-  defp pad(op) when length(op) == 1, do: [0, 0, 0, 0 | op]
+  defp pad(op) when length(op) >= 5, do: op
+  defp pad(op), do: pad([0 | op])
 end
