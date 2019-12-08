@@ -100,7 +100,6 @@ defmodule AOC.Intcode do
 
     case opcode do
       [0, 0, 0, @stop, @stop] ->
-        # GenServer.cast(self(), :stop)
         {:noreply, %{ic | state: :stopped}, {:continue, :stop}}
 
       [0, b_mode, a_mode, 0, op] when op in [@add, @mul] ->
@@ -116,7 +115,6 @@ defmodule AOC.Intcode do
 
         val = f.(a, b)
         tape = store(tape, dest, val)
-        # GenServer.cast(self(), :run)
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
 
       [_, _, 0, 0, @input] ->
@@ -127,14 +125,12 @@ defmodule AOC.Intcode do
           [val | rest] ->
             dest = elem(tape, ip + 1)
             tape = store(tape, dest, val)
-            # GenServer.cast(self(), :run)
             {:noreply, %{ic | tape: tape, ip: ip + 2, inputs: rest}, {:continue, :run}}
         end
 
       [_, _, mode, 0, @output] ->
         out = load(tape, mode, ip + 1)
         Enum.each(subscribers, &send(&1, {:output, out}))
-        # GenServer.cast(self(), :run)
         {:noreply, %{ic | ip: ip + 2}, {:continue, :run}}
 
       [_, branch_mode, val_mode, 0, op] when op in [@if, @unless] ->
@@ -147,7 +143,6 @@ defmodule AOC.Intcode do
             ip + 3
           end
 
-        # GenServer.cast(self(), :run)
         {:noreply, %{ic | ip: ip}, {:continue, :run}}
 
       [0, b_mode, a_mode, 0, op] when op in [@lt, @eq] ->
@@ -156,7 +151,6 @@ defmodule AOC.Intcode do
         dest = elem(tape, ip + 3)
         val = if (op == @lt and a < b) or (op == @eq and a == b), do: 1, else: 0
         tape = store(tape, dest, val)
-        # GenServer.cast(self(), :run)
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
     end
   end
