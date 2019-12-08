@@ -24,13 +24,6 @@ defmodule AOC.Day5 do
     |> Intcode.input(inp)
     |> Intcode.run()
 
-    last_output()
-  end
-
-  defp last_output(default \\ nil) do
-    receive do
-      {:done, _ic} -> default
-      {:output, out} -> last_output(out)
-    end
+    Intcode.last_output()
   end
 end
