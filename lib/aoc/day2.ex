@@ -26,16 +26,23 @@ defmodule AOC.Day2 do
     {output, 100 * noun + verb}
   end
 
-  defp run(tape, noun, verb) do
-    tape
-    |> replace_at(1, noun)
-    |> replace_at(2, verb)
-    |> Intcode.new()
-    |> Intcode.subscribe(self())
-    |> Intcode.run()
+  defp run(tape, noun, verb, timeout \\ :infinity) do
+    pid =
+      tape
+      |> replace_at(1, noun)
+      |> replace_at(2, verb)
+      |> Intcode.new()
+      |> Intcode.subscribe(self())
+      |> Intcode.run()
 
     receive do
-      {:done, %{tape: tape}} -> elem(tape, 0)
+      :done ->
+        pid
+        |> Intcode.tape()
+        |> hd()
+    after
+      timeout ->
+        :timeout
     end
   end
 end

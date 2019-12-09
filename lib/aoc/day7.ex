@@ -23,7 +23,7 @@ defmodule AOC.Day7 do
     run(inp, 5..9, subscriptions)
   end
 
-  def run(tape, range, subscriptions) do
+  defp run(tape, range, subscriptions) do
     range
     |> Combination.permutate()
     |> Enum.map(fn phases ->

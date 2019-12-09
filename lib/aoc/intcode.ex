@@ -2,7 +2,6 @@ defmodule AOC.Intcode do
   @moduledoc "Intcode simulator."
 
   use GenServer
-  import AOC.Utils
 
   @add 1
   @mul 2
@@ -12,7 +11,12 @@ defmodule AOC.Intcode do
   @unless 6
   @lt 7
   @eq 8
-  @stop 9
+  @rb 9
+  @stop 99
+
+  @position 0
+  @immediate 1
+  @relative 2
 
   @doc "Creates a new Intcode computer."
   def new(tape) do
@@ -39,20 +43,32 @@ defmodule AOC.Intcode do
   end
 
   @doc "Gets the last output, assuming you've subscribed to exactly one computer."
-  def last_output(default \\ nil) do
+  def last_output(timeout \\ :infinity, default \\ nil) do
     receive do
-      {:done, _ic} -> default
-      {:output, out} -> last_output(out)
+      :done -> default
+      {:output, out} -> last_output(timeout, out)
+    after
+      timeout -> :timeout
     end
   end
+
+  @doc "Get the tape as a list"
+  def tape(pid), do: GenServer.call(pid, :tape)
 
   def start_link(tape), do: GenServer.start_link(__MODULE__, tape)
 
   def init(tape) do
+    tape =
+      tape
+      |> Enum.with_index()
+      |> Enum.map(fn {x, idx} -> {idx, x} end)
+      |> Map.new()
+
     ic = %{
-      tape: List.to_tuple(tape),
+      tape: tape,
       subscribers: MapSet.new(),
       ip: 0,
+      rb: 0,
       inputs: [],
       state: :stopped
     }
@@ -60,12 +76,17 @@ defmodule AOC.Intcode do
     {:ok, ic}
   end
 
-  def handle_cast(:run, ic), do: {:noreply, ic, {:continue, :run}}
+  def handle_call(:tape, _from, %{tape: tape} = ic) do
+    tape =
+      tape
+      |> Map.to_list()
+      |> Enum.sort_by(fn {k, _v} -> k end)
+      |> Enum.map(fn {_k, v} -> v end)
 
-  def handle_cast({:input, val}, %{inputs: inputs, state: state} = ic) do
-    reply = {:noreply, %{ic | state: :waking, inputs: inputs ++ [val]}}
-    if state === :sleeping, do: Tuple.insert_at(reply, 2, {:continue, :run}), else: reply
+    {:reply, tape, ic}
   end
+
+  def handle_cast(:run, ic), do: {:noreply, ic, {:continue, :run}}
 
   def handle_cast({:subscribe, new_subs}, %{subscribers: current_subs} = ic) do
     subs =
@@ -78,34 +99,42 @@ defmodule AOC.Intcode do
     {:noreply, %{ic | subscribers: subs}}
   end
 
+  def handle_cast({:input, val}, %{inputs: inputs, state: state} = ic) do
+    reply = {:noreply, %{ic | state: :waking, inputs: inputs ++ [val]}}
+    if state === :sleeping, do: Tuple.insert_at(reply, 2, {:continue, :run}), else: reply
+  end
+
   def handle_info({:output, val}, ic), do: handle_cast({:input, val}, ic)
 
-  def handle_info({:done, ic}, _ic), do: {:noreply, ic}
+  def handle_info(:done, ic), do: {:noreply, ic}
 
   def handle_continue(:run, ic), do: simulate(ic)
 
   def handle_continue(:stop, %{subscribers: subscribers} = ic) do
-    Enum.each(subscribers, &send(&1, {:done, ic}))
+    Enum.each(subscribers, &send(&1, :done))
     {:noreply, ic}
   end
 
-  defp simulate(%{tape: tape, subscribers: subscribers, ip: ip, inputs: inputs} = ic) do
+  defp simulate(%{tape: tape, subscribers: subscribers, ip: ip, rb: rb, inputs: inputs} = ic) do
     ic = %{ic | state: :running}
 
-    opcode =
-      tape
-      |> elem(ip)
-      |> Integer.digits()
-      |> pad()
+    instruction = tape[ip]
+    opcode = rem(instruction, 100)
 
-    case opcode do
-      [0, 0, 0, @stop, @stop] ->
+    modes =
+      (instruction / 100)
+      |> floor()
+      |> Integer.digits()
+      |> pad(3)
+
+    case {modes, opcode} do
+      {[0, 0, 0], @stop} ->
         {:noreply, %{ic | state: :stopped}, {:continue, :stop}}
 
-      [0, b_mode, a_mode, 0, op] when op in [@add, @mul] ->
-        a = load(tape, a_mode, ip + 1)
-        b = load(tape, b_mode, ip + 2)
-        dest = elem(tape, ip + 3)
+      {[dest_mode, b_mode, a_mode], op} when op in [@add, @mul] ->
+        a = load(tape, a_mode, rb, ip + 1)
+        b = load(tape, b_mode, rb, ip + 2)
+        dest = destination(tape, dest_mode, rb, ip + 3)
 
         f =
           case op do
@@ -117,49 +146,59 @@ defmodule AOC.Intcode do
         tape = store(tape, dest, val)
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
 
-      [_, _, 0, 0, @input] ->
+      {[0, 0, mode], @input} ->
+        mode = if mode == @position, do: @immediate, else: mode
+
         case inputs do
           [] ->
             {:noreply, %{ic | state: :sleeping}, :hibernate}
 
           [val | rest] ->
-            dest = elem(tape, ip + 1)
+            dest = destination(tape, mode, rb, ip + 1)
             tape = store(tape, dest, val)
             {:noreply, %{ic | tape: tape, ip: ip + 2, inputs: rest}, {:continue, :run}}
         end
 
-      [_, _, mode, 0, @output] ->
-        out = load(tape, mode, ip + 1)
+      {[0, 0, mode], @output} ->
+        out = load(tape, mode, rb, ip + 1)
         Enum.each(subscribers, &send(&1, {:output, out}))
         {:noreply, %{ic | ip: ip + 2}, {:continue, :run}}
 
-      [_, branch_mode, val_mode, 0, op] when op in [@if, @unless] ->
-        val = load(tape, val_mode, ip + 1)
+      {[0, branch_mode, val_mode], op} when op in [@if, @unless] ->
+        val = load(tape, val_mode, rb, ip + 1)
 
         ip =
           if (op == @if and val != 0) or (op == @unless and val == 0) do
-            load(tape, branch_mode, ip + 2)
+            load(tape, branch_mode, rb, ip + 2)
           else
             ip + 3
           end
 
         {:noreply, %{ic | ip: ip}, {:continue, :run}}
 
-      [0, b_mode, a_mode, 0, op] when op in [@lt, @eq] ->
-        a = load(tape, a_mode, ip + 1)
-        b = load(tape, b_mode, ip + 2)
-        dest = elem(tape, ip + 3)
+      {[dest_mode, b_mode, a_mode], op} when op in [@lt, @eq] ->
+        a = load(tape, a_mode, rb, ip + 1)
+        b = load(tape, b_mode, rb, ip + 2)
+        dest = destination(tape, dest_mode, rb, ip + 3)
         val = if (op == @lt and a < b) or (op == @eq and a == b), do: 1, else: 0
         tape = store(tape, dest, val)
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
+
+      {[0, 0, mode], @rb} ->
+        offset = load(tape, mode, rb, ip + 1)
+        {:noreply, %{ic | ip: ip + 2, rb: rb + offset}, {:continue, :run}}
     end
   end
 
-  defp load(tape, 0, idx), do: elem(tape, elem(tape, idx))
-  defp load(tape, 1, idx), do: elem(tape, idx)
+  defp destination(tape, @relative, rb, idx), do: Map.get(tape, idx, 0) + rb
+  defp destination(tape, _mode, _rb, idx), do: Map.get(tape, idx, 0)
 
-  defp store(tape, idx, val), do: replace_at(tape, idx, val)
+  defp load(tape, @position, rb, idx), do: load(tape, @immediate, rb, Map.get(tape, idx, 0))
+  defp load(tape, @immediate, _rb, idx), do: Map.get(tape, idx, 0)
+  defp load(tape, @relative, rb, idx), do: load(tape, @immediate, rb, Map.get(tape, idx, 0) + rb)
 
-  defp pad(op) when length(op) >= 5, do: op
-  defp pad(op), do: pad([0 | op])
+  defp store(tape, idx, val), do: Map.put(tape, idx, val)
+
+  defp pad(xs, n) when length(xs) == n, do: xs
+  defp pad(xs, n) when length(xs) < n, do: pad([0 | xs], n)
 end
