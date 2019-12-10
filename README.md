@@ -23,6 +23,7 @@ Advent of Code 2019 in Elixir.
 ### Cheat Days
 
 - Day 5: Used the `combination` package to compute permutations of a list.
+- Day 10: Searched around for ways to compute the points that lie between two other points.
 
 ### Run It
 
