@@ -17,7 +17,7 @@ defmodule AOC.Day5 do
   """
   def part2(inp \\ default()), do: run(inp, 5)
 
-  def run(tape, inp) do
+  defp run(tape, inp) do
     tape
     |> Intcode.new()
     |> Intcode.subscribe(self())

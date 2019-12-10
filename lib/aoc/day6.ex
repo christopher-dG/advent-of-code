@@ -37,7 +37,6 @@ defmodule AOC.Day6 do
     else
       intersection
       |> MapSet.to_list()
-      |> IO.inspect()
       |> hd()
     end
   end
