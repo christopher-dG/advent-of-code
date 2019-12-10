@@ -5,28 +5,39 @@ defmodule AOC.Day10 do
 
   @doc """
       iex> AOC.Day10.part1
-      230
+      {{19, 11}, 230}
   """
   def part1(inp \\ default()) do
     inp
     |> get_asteroids()
     |> count_visible()
     |> Enum.max_by(&elem(&1, 1))
-    |> elem(1)
   end
 
-  def part2(inp \\ default()) do
-    inp
-  end
+  def part2(inp \\ default(), n \\ 200) do
+    # Skip the big long computation to come up with this.
+    centre = {19, 11}
 
-  defp count_visible(asteroids) do
-    asteroids
-    |> Enum.map(&{&1, count_visible(asteroids, &1)})
-    |> Map.new()
-  end
+    {x, y} =
+      inp
+      |> get_asteroids()
+      |> Enum.filter(&(&1 != centre))
+      |> Enum.map(&{&1, angle(centre, &1)})
+      # THE SORT IS NOT CORRECT
+      |> Enum.sort_by(fn {_a, theta} -> theta end)
+      |> Enum.split_while(fn {_a, theta} -> theta < 0 end)
+      |> Tuple.to_list()
+      |> Enum.reverse()
+      |> List.flatten()
+      |> Enum.chunk_by(fn {_a, theta} -> theta end)
+      |> Enum.map(fn list ->
+        list
+        |> Enum.map(fn {a, _theta} -> a end)
+        |> Enum.sort_by(&distance(centre, &1))
+      end)
+      |> nth_laser(n)
 
-  defp count_visible(asteroids, asteroid) do
-    Enum.count(asteroids, &is_visible?(asteroids, asteroid, &1))
+    100 * x + y
   end
 
   defp get_asteroids(chars) do
@@ -56,4 +67,19 @@ defmodule AOC.Day10 do
 
     visible_asteroid == b
   end
+
+  defp count_visible(asteroids) do
+    asteroids
+    |> Enum.map(&{&1, count_visible(asteroids, &1)})
+    |> Map.new()
+  end
+
+  defp count_visible(asteroids, asteroid) do
+    Enum.count(asteroids, &is_visible?(asteroids, asteroid, &1))
+  end
+
+  defp nth_laser(asteroids, n), do: nth_laser(asteroids, n, 1)
+  defp nth_laser([[] | tail], n, current), do: nth_laser(tail, n, current)
+  defp nth_laser([[h | _t] | _tail], n, n), do: h
+  defp nth_laser([[_h | t] | tail], n, current), do: nth_laser(tail ++ [t], n, current + 1)
 end
