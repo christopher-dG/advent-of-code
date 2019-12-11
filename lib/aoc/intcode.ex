@@ -43,12 +43,10 @@ defmodule AOC.Intcode do
   end
 
   @doc "Gets the last output, assuming you've subscribed to exactly one computer."
-  def last_output(timeout \\ :infinity, default \\ nil) do
+  def last_output(default \\ nil) do
     receive do
       :done -> default
-      {:output, out} -> last_output(timeout, out)
-    after
-      timeout -> :timeout
+      {:output, out} -> last_output(out)
     end
   end
 
@@ -77,10 +75,21 @@ defmodule AOC.Intcode do
   end
 
   def handle_call(:tape, _from, %{tape: tape} = ic) do
+    # Add in missing in-between indices.
+    idxs = Map.keys(tape)
+    min_idx = Enum.min(idxs)
+    max_idx = Enum.max(idxs)
+
     tape =
-      tape
+      min_idx..max_idx
+      |> Enum.map(&{&1, 0})
+      |> Map.new()
+      |> Map.merge(tape)
+      # Basically Enum.with_index().
       |> Map.to_list()
+      # Sort by index.
       |> Enum.sort_by(fn {k, _v} -> k end)
+      # Remove the indices (yielding the tape as a list)
       |> Enum.map(fn {_k, v} -> v end)
 
     {:reply, tape, ic}
@@ -101,6 +110,7 @@ defmodule AOC.Intcode do
 
   def handle_cast({:input, val}, %{inputs: inputs, state: state} = ic) do
     reply = {:noreply, %{ic | state: :waking, inputs: inputs ++ [val]}}
+    # Only send a run signal if the computer is not already running.
     if state === :sleeping, do: Tuple.insert_at(reply, 2, {:continue, :run}), else: reply
   end
 
@@ -108,16 +118,21 @@ defmodule AOC.Intcode do
 
   def handle_info(:done, ic), do: {:noreply, ic}
 
-  def handle_continue(:run, ic), do: simulate(ic)
-
   def handle_continue(:stop, %{subscribers: subscribers} = ic) do
     Enum.each(subscribers, &send(&1, :done))
     {:noreply, ic}
   end
 
+  def handle_continue(:run, ic), do: simulate(ic)
+
+  # TODO: This would probably be made faster by recursing into simulate,
+  # instead of using :continue for every instruction.
   defp simulate(%{tape: tape, subscribers: subscribers, ip: ip, rb: rb, inputs: inputs} = ic) do
+    # No matter what state we came from, we're running now.
     ic = %{ic | state: :running}
 
+    # An instruction looks like abcde where de = opcode and cba are parameter modes.
+    # Leading zeroes are omitted but we add them to make pattern matching easier.
     instruction = tape[ip]
     opcode = rem(instruction, 100)
 
@@ -129,9 +144,11 @@ defmodule AOC.Intcode do
 
     case {modes, opcode} do
       {[0, 0, 0], @stop} ->
+        # Stop: terminate.
         {:noreply, %{ic | state: :stopped}, {:continue, :stop}}
 
       {[dest_mode, b_mode, a_mode], op} when op in [@add, @mul] ->
+        # Add or multiply: %1 op %2 -> %3.
         a = load(tape, a_mode, rb, ip + 1)
         b = load(tape, b_mode, rb, ip + 2)
         dest = destination(tape, dest_mode, rb, ip + 3)
@@ -147,24 +164,27 @@ defmodule AOC.Intcode do
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
 
       {[0, 0, mode], @input} ->
-        mode = if mode == @position, do: @immediate, else: mode
-
+        # Input: %input -> %1.
         case inputs do
           [] ->
+            # Go to sleep and wait for a new input.
             {:noreply, %{ic | state: :sleeping}, :hibernate}
 
           [val | rest] ->
+            # Use an existing input.
             dest = destination(tape, mode, rb, ip + 1)
             tape = store(tape, dest, val)
             {:noreply, %{ic | tape: tape, ip: ip + 2, inputs: rest}, {:continue, :run}}
         end
 
       {[0, 0, mode], @output} ->
+        # Output: %1 -> %output.
         out = load(tape, mode, rb, ip + 1)
         Enum.each(subscribers, &send(&1, {:output, out}))
         {:noreply, %{ic | ip: ip + 2}, {:continue, :run}}
 
       {[0, branch_mode, val_mode], op} when op in [@if, @unless] ->
+        # Branch: if %1 op 0: goto %2 where op is != or == for if and unless, respectively.
         val = load(tape, val_mode, rb, ip + 1)
 
         ip =
@@ -177,6 +197,7 @@ defmodule AOC.Intcode do
         {:noreply, %{ic | ip: ip}, {:continue, :run}}
 
       {[dest_mode, b_mode, a_mode], op} when op in [@lt, @eq] ->
+        # Compare: (if %1 op %2: 1, else: 0) -> %3 where op is < or == for lt and eq, respectively.
         a = load(tape, a_mode, rb, ip + 1)
         b = load(tape, b_mode, rb, ip + 2)
         dest = destination(tape, dest_mode, rb, ip + 3)
@@ -185,6 +206,7 @@ defmodule AOC.Intcode do
         {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
 
       {[0, 0, mode], @rb} ->
+        # Relative base adjust: %rb += %1.
         offset = load(tape, mode, rb, ip + 1)
         {:noreply, %{ic | ip: ip + 2, rb: rb + offset}, {:continue, :run}}
     end

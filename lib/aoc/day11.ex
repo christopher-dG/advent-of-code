@@ -1,6 +1,8 @@
 defmodule AOC.Day11 do
   use AOC
 
+  alias AOC.Intcode
+
   @black 0
   @white 1
 
@@ -11,8 +13,6 @@ defmodule AOC.Day11 do
 
   @turn_left 0
   @turn_right 1
-
-  alias AOC.Intcode
 
   defp default, do: input(",", &String.to_integer/1)
 
@@ -44,8 +44,8 @@ defmodule AOC.Day11 do
       |> poll_robot(@white)
 
     keys = Map.keys(grid)
-    {max_x, _y} = Enum.max_by(keys, &(elem(&1, 0)))
-    {_x, max_y} = Enum.max_by(keys, &(elem(&1, 1)))
+    {max_x, _y} = Enum.max_by(keys, &elem(&1, 0))
+    {_x, max_y} = Enum.max_by(keys, &elem(&1, 1))
     {max_x, max_y}
 
     Enum.map(0..max_y, fn y ->
@@ -106,7 +106,7 @@ defmodule AOC.Day11 do
     end
   end
 
-  defp get_output() do
+  defp get_output do
     receive do
       {:output, n} -> {:ok, n}
       :done -> :done

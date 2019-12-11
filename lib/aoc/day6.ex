@@ -48,6 +48,7 @@ defmodule AOC.Day6 do
   end
 
   defp build_graph(orbits, :undirected) do
+    # To build an undirected mode, we just treat every orbit as a -> b and b -> a.
     Enum.reduce(orbits, %{}, fn [orbitee, orbiter], acc ->
       acc
       |> Map.update(orbitee, MapSet.new([orbiter]), &MapSet.put(&1, orbiter))

@@ -18,7 +18,7 @@ defmodule AOC.Day10 do
       iex> AOC.Day10.part2
       {{12, 5}, 1205}
   """
-  def part2(inp \\ default(), n \\ 200) do
+  def part2(inp \\ default()) do
     # Skip the big long computation to come up with this.
     centre = {19, 11}
 
@@ -27,7 +27,7 @@ defmodule AOC.Day10 do
       |> get_asteroids()
       |> Enum.filter(&(&1 != centre))
       |> sort_for_laser(centre)
-      |> nth_laser(n)
+      |> nth_laser(200)
 
     {{x, y}, 100 * x + y}
   end

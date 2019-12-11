@@ -26,7 +26,7 @@ defmodule AOC.Day2 do
     {output, 100 * noun + verb}
   end
 
-  defp run(tape, noun, verb, timeout \\ :infinity) do
+  defp run(tape, noun, verb) do
     pid =
       tape
       |> replace_at(1, noun)
@@ -40,9 +40,6 @@ defmodule AOC.Day2 do
         pid
         |> Intcode.tape()
         |> hd()
-    after
-      timeout ->
-        :timeout
     end
   end
 end
