@@ -14,6 +14,10 @@ defmodule AOC.Day10 do
     |> Enum.max_by(&elem(&1, 1))
   end
 
+  @doc """
+      iex> AOC.Day10.part2
+      {{12, 5}, 1205}
+  """
   def part2(inp \\ default(), n \\ 200) do
     # Skip the big long computation to come up with this.
     centre = {19, 11}
@@ -22,22 +26,10 @@ defmodule AOC.Day10 do
       inp
       |> get_asteroids()
       |> Enum.filter(&(&1 != centre))
-      |> Enum.map(&{&1, angle(centre, &1)})
-      # THE SORT IS NOT CORRECT
-      |> Enum.sort_by(fn {_a, theta} -> theta end)
-      |> Enum.split_while(fn {_a, theta} -> theta < 0 end)
-      |> Tuple.to_list()
-      |> Enum.reverse()
-      |> List.flatten()
-      |> Enum.chunk_by(fn {_a, theta} -> theta end)
-      |> Enum.map(fn list ->
-        list
-        |> Enum.map(fn {a, _theta} -> a end)
-        |> Enum.sort_by(&distance(centre, &1))
-      end)
+      |> sort_for_laser(centre)
       |> nth_laser(n)
 
-    100 * x + y
+    {{x, y}, 100 * x + y}
   end
 
   defp get_asteroids(chars) do
@@ -76,6 +68,29 @@ defmodule AOC.Day10 do
 
   defp count_visible(asteroids, asteroid) do
     Enum.count(asteroids, &is_visible?(asteroids, asteroid, &1))
+  end
+
+  defp quadrant(theta) when theta < -90, do: 3
+  defp quadrant(theta) when theta < 0, do: 0
+  defp quadrant(theta) when theta < 90, do: 1
+  defp quadrant(theta) when theta <= 180, do: 2
+
+  defp sort_for_laser(asteroids, centre) do
+    asteroids
+    |> Enum.map(&{&1, angle(centre, &1)})
+    |> Enum.reduce(List.duplicate([], 4), fn {_a, theta} = tuple, quadrants ->
+      List.update_at(quadrants, quadrant(theta), &[tuple | &1])
+    end)
+    |> Enum.map(fn asteroids ->
+      Enum.sort_by(asteroids, fn {_a, theta} -> theta end)
+    end)
+    |> List.flatten()
+    |> Enum.chunk_by(fn {_a, theta} -> theta end)
+    |> Enum.map(fn list ->
+      list
+      |> Enum.map(fn {a, _theta} -> a end)
+      |> Enum.sort_by(&distance(centre, &1))
+    end)
   end
 
   defp nth_laser(asteroids, n), do: nth_laser(asteroids, n, 1)
