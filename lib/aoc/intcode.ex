@@ -50,7 +50,7 @@ defmodule AOC.Intcode do
     end
   end
 
-  @doc "Get the tape as a list"
+  @doc "Get the tape as a list."
   def tape(pid), do: GenServer.call(pid, :tape)
 
   def start_link(tape), do: GenServer.start_link(__MODULE__, tape)
@@ -95,7 +95,7 @@ defmodule AOC.Intcode do
     {:reply, tape, ic}
   end
 
-  def handle_cast(:run, ic), do: {:noreply, ic, {:continue, :run}}
+  def handle_cast(:run, ic), do: simulate(ic)
 
   def handle_cast({:subscribe, new_subs}, %{subscribers: current_subs} = ic) do
     subs =
@@ -118,15 +118,8 @@ defmodule AOC.Intcode do
 
   def handle_info(:done, ic), do: {:noreply, ic}
 
-  def handle_continue(:stop, %{subscribers: subscribers} = ic) do
-    Enum.each(subscribers, &send(&1, :done))
-    {:noreply, ic}
-  end
-
   def handle_continue(:run, ic), do: simulate(ic)
 
-  # TODO: This would probably be made faster by recursing into simulate,
-  # instead of using :continue for every instruction.
   defp simulate(%{tape: tape, subscribers: subscribers, ip: ip, rb: rb, inputs: inputs} = ic) do
     # No matter what state we came from, we're running now.
     ic = %{ic | state: :running}
@@ -145,7 +138,8 @@ defmodule AOC.Intcode do
     case {modes, opcode} do
       {[0, 0, 0], @stop} ->
         # Stop: terminate.
-        {:noreply, %{ic | state: :stopped}, {:continue, :stop}}
+        Enum.each(subscribers, &send(&1, :done))
+        {:noreply, %{ic | state: :stopped}}
 
       {[dest_mode, b_mode, a_mode], op} when op in [@add, @mul] ->
         # Add or multiply: %1 op %2 -> %3.
@@ -161,7 +155,7 @@ defmodule AOC.Intcode do
 
         val = f.(a, b)
         tape = store(tape, dest, val)
-        {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
+        simulate(%{ic | tape: tape, ip: ip + 4})
 
       {[0, 0, mode], @input} ->
         # Input: %input -> %1.
@@ -174,14 +168,14 @@ defmodule AOC.Intcode do
             # Use an existing input.
             dest = destination(tape, mode, rb, ip + 1)
             tape = store(tape, dest, val)
-            {:noreply, %{ic | tape: tape, ip: ip + 2, inputs: rest}, {:continue, :run}}
+            simulate(%{ic | tape: tape, ip: ip + 2, inputs: rest})
         end
 
       {[0, 0, mode], @output} ->
         # Output: %1 -> %output.
         out = load(tape, mode, rb, ip + 1)
         Enum.each(subscribers, &send(&1, {:output, out}))
-        {:noreply, %{ic | ip: ip + 2}, {:continue, :run}}
+        simulate(%{ic | ip: ip + 2})
 
       {[0, branch_mode, val_mode], op} when op in [@if, @unless] ->
         # Branch: if %1 op 0: goto %2 where op is != or == for if and unless, respectively.
@@ -194,7 +188,7 @@ defmodule AOC.Intcode do
             ip + 3
           end
 
-        {:noreply, %{ic | ip: ip}, {:continue, :run}}
+        simulate(%{ic | ip: ip})
 
       {[dest_mode, b_mode, a_mode], op} when op in [@lt, @eq] ->
         # Compare: (if %1 op %2: 1, else: 0) -> %3 where op is < or == for lt and eq, respectively.
@@ -203,12 +197,12 @@ defmodule AOC.Intcode do
         dest = destination(tape, dest_mode, rb, ip + 3)
         val = if (op == @lt and a < b) or (op == @eq and a == b), do: 1, else: 0
         tape = store(tape, dest, val)
-        {:noreply, %{ic | tape: tape, ip: ip + 4}, {:continue, :run}}
+        simulate(%{ic | tape: tape, ip: ip + 4})
 
       {[0, 0, mode], @rb} ->
         # Relative base adjust: %rb += %1.
         offset = load(tape, mode, rb, ip + 1)
-        {:noreply, %{ic | ip: ip + 2, rb: rb + offset}, {:continue, :run}}
+        simulate(%{ic | ip: ip + 2, rb: rb + offset})
     end
   end
 
