@@ -80,6 +80,8 @@ defmodule AOC.Day11 do
         grid = Map.put(grid, {x, y}, colour)
         path = MapSet.put(path, {x, y})
 
+        # The direction constants are ordered such that subtracting or adding one
+        # gives you the right answer for turning left or right, respectively.
         turn =
           case get_output() do
             {:ok, @turn_left} -> -1

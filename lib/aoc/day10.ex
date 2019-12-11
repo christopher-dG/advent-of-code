@@ -52,6 +52,8 @@ defmodule AOC.Day10 do
   defp is_visible?(asteroids, a, b) do
     theta = angle(a, b)
 
+    # An asteroid b is visible to a if there are no asteroids closer to a than b
+    # whose angle, relative to a, is the same as that of b.
     visible_asteroid =
       asteroids
       |> Enum.filter(&(angle(a, &1) == theta and &1 != a))
@@ -76,15 +78,31 @@ defmodule AOC.Day10 do
   defp quadrant(theta) when theta <= 180, do: 2
 
   defp sort_for_laser(asteroids, centre) do
+    # [{x1, y1}, ...]
     asteroids
+    # [{{x1, y1}, theta1}, ...]
     |> Enum.map(&{&1, angle(centre, &1)})
+    # Split the asteroids into four quadrants (lists),
+    # where the + is our centre:
+    #  -------
+    # | 3 | 0 |
+    # |---+---|
+    # | 2 | 1 |
+    #  -------
+    # [[{{x1, y1}, theta1, ...}], (3 more)]
     |> Enum.reduce(List.duplicate([], 4), fn {_a, theta} = tuple, quadrants ->
       List.update_at(quadrants, quadrant(theta), &[tuple | &1])
     end)
+    # Sort each quadrant by angle, then flatten.
+    # [{{x1, y1}, theta1}, {{x2, y2}, theta2}], where the sequence of thetas
+    # "goes in a circle".
     |> Enum.map(fn asteroids ->
       Enum.sort_by(asteroids, fn {_a, theta} -> theta end)
     end)
     |> List.flatten()
+    # Group asteroids with the same angle (that are in line with each other),
+    # then discard the angle and sort by distance from the centre asteroid.
+    # [[{x1, y1}, {x2, y2}], [{x3, y3}], ...]
     |> Enum.chunk_by(fn {_a, theta} -> theta end)
     |> Enum.map(fn list ->
       list
@@ -93,8 +111,12 @@ defmodule AOC.Day10 do
     end)
   end
 
+  # Entrypoing: Add an accumulator.
   defp nth_laser(asteroids, n), do: nth_laser(asteroids, n, 1)
+  # If a line of asteroids is exhausted, discard the empty list and continue.
   defp nth_laser([[] | tail], n, current), do: nth_laser(tail, n, current)
+  # If the accumulator has reached the desired count, return that asteroid.
   defp nth_laser([[h | _t] | _tail], n, n), do: h
+  # Otherwise, discard the asteroid and put the rest of the line at the back.
   defp nth_laser([[_h | t] | tail], n, current), do: nth_laser(tail ++ [t], n, current + 1)
 end

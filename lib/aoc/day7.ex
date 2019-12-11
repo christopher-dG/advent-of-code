@@ -29,9 +29,12 @@ defmodule AOC.Day7 do
     |> Enum.map(fn phases ->
       pids = Enum.map(phases, fn _p -> Intcode.new(tape) end)
 
+      # Set up the subscriptions as described by the input map.
       Enum.each(subscriptions, fn {subscriber, subscribees} ->
         subscribees =
           Enum.map(subscribees, fn subscribee ->
+            # If an integer i was passed, it means "computer i".
+            # Otherwise we assume it's a pid.
             cond do
               is_integer(subscribee) -> Enum.at(pids, subscribee)
               is_pid(subscribee) -> subscribee
@@ -41,16 +44,20 @@ defmodule AOC.Day7 do
         Intcode.subscribe(Enum.at(pids, subscriber), subscribees)
       end)
 
+      # Give each computer its phase input.
       pids
       |> Enum.zip(phases)
       |> Enum.each(fn {pid, phase} -> Intcode.input(pid, phase) end)
 
+      # The first computer gets 0 as a second input.
+      # The other computers will receive inputs from their subscribee's outputs.
       pids
       |> hd()
       |> Intcode.input(0)
 
       Enum.each(pids, &Intcode.run/1)
 
+      # This assumes that self() was somewhere in the subscription map.
       Intcode.last_output()
     end)
     |> Enum.max()
