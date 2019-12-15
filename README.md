@@ -24,6 +24,8 @@ Advent of Code 2019 in Elixir.
 
 - Day 5: Used the `combination` package to compute permutations of a list.
 - Day 10: Searched around for ways to compute the points that lie between two other points.
+- Day 12: Used the same combinatorics package to compute all pairs of a list.
+- Dau 12: "Accidentally" saw a Reddit post that revealed the strategy.
 
 ### Run It
 

@@ -111,7 +111,7 @@ defmodule AOC.Day10 do
     end)
   end
 
-  # Entrypoing: Add an accumulator.
+  # Entrypoint: Add an accumulator.
   defp nth_laser(asteroids, n), do: nth_laser(asteroids, n, 1)
   # If a line of asteroids is exhausted, discard the empty list and continue.
   defp nth_laser([[] | tail], n, current), do: nth_laser(tail, n, current)
