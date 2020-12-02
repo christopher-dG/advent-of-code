@@ -52,8 +52,8 @@ let part2 xs target =
   let (i, j, k) = three_sum_idxs with_idx target tbl in
   three_sum_product xs i j k
 
-let run path =
-  let xs = read_ints path in
+let run () =
+  let xs = read_ints "input/1.txt" in
   let sol1 = part1 xs 2020 in
   let sol2 = part2 xs 2020 in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2

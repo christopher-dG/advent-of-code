@@ -23,5 +23,6 @@ Follow my associated blog posts [here](https://cdg.dev/tags/aoc)!
 ### Run It
 
 ```sh
+dune exec bin/main.exe <day>
 dune runtest
 ```
