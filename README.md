@@ -1,8 +1,7 @@
 # Advent of Code
 
-[![CI](https://github.com/christopher-dG/aoc/workflows/CI/badge.svg)](https://github.com/christopher-dG/aoc/actions)
-
 Advent of Code 2020 in OCaml.
+Follow my associated blog posts [here](https://cdg.dev/tags/aoc)!
 
 ### Goals
 
@@ -23,4 +22,6 @@ Advent of Code 2020 in OCaml.
 
 ### Run It
 
-TODO
+```sh
+dune runtest
+```

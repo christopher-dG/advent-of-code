@@ -1,0 +1,14 @@
+name: Run Tests
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: 4.11.1
+      - run: |
+          opam install -y core dune
+          opam exec -- dune build
+          opam exec -- dune runtest
