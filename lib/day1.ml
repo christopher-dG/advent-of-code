@@ -52,12 +52,10 @@ let run () =
   let sol2 = part2 xs 2020 in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2
 
-let%test "part 1 (example)" =
-  part1 [ 1721; 979; 366; 299; 675; 1456 ] 2020 = 514579
+let%test "examples" =
+  let lines = [ 1721; 979; 366; 299; 675; 1456 ] in
+  part1 lines 2020 = 514579 && part2 lines 2020 = 241861950
 
-let%test "part 1 (input)" = part1 (read_ints "../input/1.txt") 2020 = 545379
-
-let%test "part 2 (example)" =
-  part2 [ 1721; 979; 366; 299; 675; 1456 ] 2020 = 241861950
-
-let%test "part 2 (input)" = part2 (read_ints "../input/1.txt") 2020 = 257778836
+let%test "input" =
+  let lines = read_ints "../input/1.txt" in
+  part1 lines 2020 = 545379 && part2 lines 2020 = 257778836

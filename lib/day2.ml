@@ -29,3 +29,11 @@ let run () =
   let sol1 = part1 lines in
   let sol2 = part2 lines in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2
+
+let%test "examples" =
+  let lines = [ "1-3 a: abcde"; "1-3 b: cdefg"; "2-9 c: ccccccccc" ] in
+  part1 lines = 2 && part2 lines = 1
+
+let%test "input" =
+  let lines = read_lines "../input/2.txt" in
+  part1 lines = 556 && part2 lines = 605
