@@ -8,6 +8,8 @@ let () =
   let f = match day with
   | 1 ->
      Day1.run
+  | 2 ->
+     Day2.run
   | _ ->
      raise (Invalid_argument "Unsupported day") in
   f ()

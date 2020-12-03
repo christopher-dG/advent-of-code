@@ -17,6 +17,7 @@ Follow my associated blog posts [here](https://cdg.dev/tags/aoc)!
 
 - Avoid excessive external packages
 - Avoid finding help online
+- Don't go back and refactor old solutions (leaving comments is okay, I want to be able to see my progression)
 
 ### Cheat Days
 
