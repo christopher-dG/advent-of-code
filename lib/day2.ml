@@ -4,10 +4,8 @@ open Util
 
 let parse_line line =
   let re = Pcre.regexp "(\\d+)-(\\d+) ([a-z]): ([a-z]+)" in
-  match Group.all (exec re line) with
-  | [| _; a; b; char; pass |] ->
-      (int_of_string a, int_of_string b, char.[0], pass)
-  | _ -> raise (Invalid_argument "Invalid line")
+  let[@warning "-8"] [| _; a; b; char; pass |] = Group.all (exec re line) in
+  (int_of_string a, int_of_string b, char.[0], pass)
 
 let is_valid_password_sled line =
   let min, max, char, pass = parse_line line in
