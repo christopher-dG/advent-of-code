@@ -10,7 +10,7 @@ let rec traverse_rec grid ~x ~y ~xd ~yd ~trees =
   if y >= Array.length grid then trees
   else
     let row = grid.(y) in
-    let loc = grid.(y).(x mod Array.length row) in
+    let loc = row.(x mod Array.length row) in
     let trees = if loc then trees + 1 else trees in
     traverse_rec grid ~x:(x + xd) ~y:(y + yd) ~xd ~yd ~trees
 
