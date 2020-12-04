@@ -1,4 +1,3 @@
-open Core
 open Util
 
 let rec split_batch_rec lines cur acc =

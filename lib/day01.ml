@@ -1,5 +1,3 @@
-open Core
-open Printf
 open Util
 
 let rec two_sum_product xs target set =

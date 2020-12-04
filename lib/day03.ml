@@ -1,4 +1,3 @@
-open Core
 open Util
 
 let build_grid lines =

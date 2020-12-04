@@ -1,4 +1,3 @@
-open Core
 open Re
 open Util
 
