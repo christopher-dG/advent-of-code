@@ -42,7 +42,7 @@ let%test "examples" =
      .#........#\n\
      #.##...#...\n\
      #...##....#\n\
-     .#..#...#.#" |> String.strip |> String.split ~on:'\n'
+     .#..#...#.#" |> String.split ~on:'\n'
   in
   part1 lines = 7 && part2 lines = 336
 
