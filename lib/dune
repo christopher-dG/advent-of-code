@@ -1,5 +1,6 @@
 (library
-  (name lib)
-  (libraries core re)
-  (inline_tests)
-  (preprocess (pps ppx_inline_test)))
+ (name lib)
+ (libraries core re)
+ (inline_tests)
+ (preprocess
+  (pps ppx_inline_test)))
