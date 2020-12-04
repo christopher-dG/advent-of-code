@@ -9,7 +9,9 @@ let input_file day =
   in
   let txt = concat "input" (sprintf "%d.txt" day) in
   let cwd = Unix.getcwd () in
-  let depth = if String.contains cwd '_' then 5 else 2 in
   let this = to_absolute_exn __FILE__ ~relative_to:cwd in
-  let root = parent this depth in
+  let depth = if String.contains cwd '_' then 5 else 2 in
+  let root =
+    if this = "//toplevel//" then parent cwd 1 else parent this depth
+  in
   concat root txt
