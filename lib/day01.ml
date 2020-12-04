@@ -47,7 +47,7 @@ let part2 xs target =
   three_sum_product xs i j k
 
 let run () =
-  let xs = read_ints "input/1.txt" in
+  let xs = read_ints (input_file 1) in
   let sol1 = part1 xs 2020 in
   let sol2 = part2 xs 2020 in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2
@@ -57,5 +57,5 @@ let%test "examples" =
   part1 lines 2020 = 514579 && part2 lines 2020 = 241861950
 
 let%test "input" =
-  let lines = read_ints "../input/1.txt" in
+  let lines = read_ints (input_file 1) in
   part1 lines 2020 = 545379 && part2 lines 2020 = 257778836

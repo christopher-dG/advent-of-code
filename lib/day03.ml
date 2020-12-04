@@ -25,7 +25,7 @@ let part2 lines =
   |> List.reduce_exn ~f:(fun x y -> x * y)
 
 let run () =
-  let lines = read_lines "input/3.txt" in
+  let lines = read_lines (input_file 3) in
   let sol1 = part1 lines in
   let sol2 = part2 lines in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2
@@ -47,5 +47,5 @@ let%test "examples" =
   part1 lines = 7 && part2 lines = 336
 
 let%test "input" =
-  let lines = read_lines "../input/3.txt" in
+  let lines = read_lines (input_file 3) in
   part1 lines = 276 && part2 lines = 7812180000
