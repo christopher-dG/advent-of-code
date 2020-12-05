@@ -1,6 +1,7 @@
 open Util
 
 let rec bin_partition ?min ?max chars =
+  (* FYI: This is a lot faster if you just use some bit shifts. *)
   let min = Option.value min ~default:0 in
   let max = Option.value max ~default:(Int.pow 2 (String.length chars) - 1) in
   if String.is_empty chars then min
