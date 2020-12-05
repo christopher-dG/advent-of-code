@@ -19,6 +19,7 @@ let three_sum_table xs =
     idxs
     |> List.cartesian_product idxs
     |> List.filter ~f:(fun ((i, _), (j, _)) -> not (i = j))
+    (* 12/04: `List.iter` should be used for side effects. *)
     |> List.map ~f:(fun ((i, a), (j, b)) ->
            Hashtbl.add tbl ~key:(a + b) ~data:(i, j))
   in

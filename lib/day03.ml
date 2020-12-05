@@ -21,6 +21,7 @@ let part2 lines =
   let grid = build_grid lines in
   [ (1, 1); (3, 1); (5, 1); (7, 1); (1, 2) ]
   |> List.map ~f:(fun (x, y) -> traverse grid ~x ~y)
+  (* 12/03: * can be accessed as ( * ). *)
   |> List.reduce_exn ~f:(fun x y -> x * y)
 
 let run () =
