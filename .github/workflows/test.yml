@@ -9,6 +9,7 @@ jobs:
         with:
           ocaml-version: 4.11.1
       - run: |
-          opam install -y core dune
+          opam install -y core core_bench dune
           opam exec -- dune build
           opam exec -- dune runtest
+          opam exec -- dune exec bench/main.exe
