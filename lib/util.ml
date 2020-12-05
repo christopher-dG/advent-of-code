@@ -1,8 +1,7 @@
 let read_lines path = path |> In_channel.read_lines
 
-let read_ints path = path |> read_lines |> List.map ~f:int_of_string
-
 let input_file day =
+  (* TODO: This does not work if you call it from the top level as `Util.input_file`. *)
   let open Filename in
   let rec parent path n =
     if Int.equal n 0 then path else parent (dirname path) (n - 1)

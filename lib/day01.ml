@@ -8,9 +8,10 @@ let rec two_sum_product xs target set =
       if Set.exists set ~f:(( = ) comp) then hd * comp
       else two_sum_product tl target set
 
-let part1 xs target =
+let part1 lines =
+  let xs = List.map lines ~f:int_of_string in
   let set = Set.of_list (module Int) xs in
-  two_sum_product xs target set
+  two_sum_product xs 2020 set
 
 let three_sum_table xs =
   let tbl = Hashtbl.create (module Int) in
@@ -39,22 +40,23 @@ let three_sum_product xs i j k =
   let arr = Array.of_list xs in
   arr.(i) * arr.(j) * arr.(k)
 
-let part2 xs target =
+let part2 lines =
+  let xs = List.map lines ~f:int_of_string in
   let tbl = three_sum_table xs in
   let with_idx = List.mapi xs ~f:(fun i x -> (i, x)) in
-  let i, j, k = three_sum_idxs with_idx target tbl in
+  let i, j, k = three_sum_idxs with_idx 2020 tbl in
   three_sum_product xs i j k
 
 let run () =
-  let xs = read_ints (input_file 1) in
-  let sol1 = part1 xs 2020 in
-  let sol2 = part2 xs 2020 in
+  let lines = read_lines (input_file 1) in
+  let sol1 = part1 lines in
+  let sol2 = part2 lines in
   printf "Part 1: %d\nPart 2: %d\n" sol1 sol2
 
 let%test "examples" =
-  let lines = [ 1721; 979; 366; 299; 675; 1456 ] in
-  part1 lines 2020 = 514579 && part2 lines 2020 = 241861950
+  let lines = [ "1721"; "979"; "366"; "299"; "675"; "1456" ] in
+  part1 lines = 514579 && part2 lines = 241861950
 
 let%test "input" =
-  let lines = read_ints (input_file 1) in
-  part1 lines 2020 = 545379 && part2 lines 2020 = 257778836
+  let lines = read_lines (input_file 1) in
+  part1 lines = 545379 && part2 lines = 257778836
