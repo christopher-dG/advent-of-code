@@ -24,5 +24,9 @@ let () =
           Day05.Impl.part1 Day05.Impl.lines);
       Bench.Test.create ~name:"Day05p2" (fun () ->
           Day05.Impl.part2 Day05.Impl.lines);
+      Bench.Test.create ~name:"Day06p1" (fun () ->
+          Day06.Impl.part1 Day06.Impl.lines);
+      Bench.Test.create ~name:"Day06p2" (fun () ->
+          Day06.Impl.part2 Day06.Impl.lines);
     ]
   |> Command.run
