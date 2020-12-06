@@ -17,13 +17,13 @@ module Impl = Day.Make (struct
     let j_eq = Char.equal char pass.[j - 1] in
     not (Bool.equal i_eq j_eq)
 
-  let part1 lines = List.count lines ~f:is_valid_password_sled
-
-  let part2 lines = List.count lines ~f:is_valid_password_toboggan
-
   module Out = Int
 
   let day = 2
+
+  let part1 lines = List.count lines ~f:is_valid_password_sled
+
+  let part2 lines = List.count lines ~f:is_valid_password_toboggan
 
   let sol1 = 556
 

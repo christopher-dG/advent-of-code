@@ -36,6 +36,10 @@ module Impl = Day.Make (struct
     let arr = Array.of_list xs in
     arr.(i) * arr.(j) * arr.(k)
 
+  module Out = Int
+
+  let day = 1
+
   let part1 lines =
     let xs = List.map lines ~f:int_of_string in
     let set = Set.of_list (module Int) xs in
@@ -47,10 +51,6 @@ module Impl = Day.Make (struct
     let with_idx = List.mapi xs ~f:(fun i x -> (i, x)) in
     let i, j, k = three_sum_idxs with_idx 2020 tbl in
     three_sum_product xs i j k
-
-  module Out = Int
-
-  let day = 1
 
   let sol1 = 545379
 
