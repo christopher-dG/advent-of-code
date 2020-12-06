@@ -1,12 +1,9 @@
 (* TODO: How to put signatures in an interface file? *)
-
 module type Day = sig
   module Out : sig
     type t
 
     val equal : t -> t -> bool
-
-    val pp : Format.formatter -> t -> unit
   end
 
   val day : int
