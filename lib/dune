@@ -1,6 +1,7 @@
 (library
  (name lib)
  (libraries core re)
+ (library_flags -linkall)
  (inline_tests)
  (preprocess
-  (pps ppx_inline_test)))
+  (pps ppx_bench ppx_inline_test)))
