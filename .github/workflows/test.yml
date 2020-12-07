@@ -12,4 +12,4 @@ jobs:
           opam install -y core core_bench dune
           opam exec -- dune build
           opam exec -- dune runtest
-          bash bench/runner.sh
+          opam exec -- bash bench/runner.sh
