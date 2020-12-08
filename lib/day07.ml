@@ -22,18 +22,14 @@ module Impl = Day.Make (struct
         parse_rules tl ~acc
 
   let rec contains_bag rules bag target =
-    let bags = Hashtbl.find_exn rules bag in
-    if List.exists bags ~f:(fun (b, _) -> String.equal b target) then true
-    else List.exists bags ~f:(fun (b, _) -> contains_bag rules b target)
+    Hashtbl.find_exn rules bag
+    |> List.exists ~f:(fun (b, _) ->
+           String.equal b target || contains_bag rules b target)
 
   let rec count_contents rules bag =
-    let contents = Hashtbl.find_exn rules bag in
-    let acc = ref 0 in
-    let () =
-      List.iter contents ~f:(fun (b, n) ->
-          acc := !acc + n + (n * count_contents rules b))
-    in
-    !acc
+    Hashtbl.find_exn rules bag
+    |> List.fold ~init:0 ~f:(fun acc (b, n) ->
+           acc + n + (n * count_contents rules b))
 
   module Out = Int
 
@@ -41,8 +37,8 @@ module Impl = Day.Make (struct
 
   let part1 lines =
     let rules = parse_rules lines in
-    let bags = Hashtbl.keys rules in
-    List.count bags ~f:(fun b -> contains_bag rules b "shiny gold")
+    Hashtbl.keys rules
+    |> List.count ~f:(fun b -> contains_bag rules b "shiny gold")
 
   let part2 lines =
     let rules = parse_rules lines in
