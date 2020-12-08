@@ -25,7 +25,23 @@ module Impl = Day.Make (struct
 
   let%test "examples" =
     let lines =
-      "abc\n\na\nb\nc\n\nab\nac\n\na\na\na\na\n\nb" |> String.split ~on:'\n'
+      [
+        "abc";
+        "";
+        "a";
+        "b";
+        "c";
+        "";
+        "ab";
+        "ac";
+        "";
+        "a";
+        "a";
+        "a";
+        "a";
+        "";
+        "b";
+      ]
     in
     part1 lines = 11 && part2 lines = 6
 end)

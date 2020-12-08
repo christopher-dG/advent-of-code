@@ -61,8 +61,17 @@ module Impl = Day.Make (struct
 
   let%test "examples" =
     let lines =
-      "nop +0\nacc +1\njmp +4\nacc +3\njmp -3\nacc -99\nacc +1\njmp -4\nacc +6"
-      |> String.split ~on:'\n'
+      [
+        "nop +0";
+        "acc +1";
+        "jmp +4";
+        "acc +3";
+        "jmp -3";
+        "acc -99";
+        "acc +1";
+        "jmp -4";
+        "acc +6";
+      ]
     in
     part1 lines = 5 && part2 lines = 8
 end)
