@@ -23,7 +23,7 @@ module Make (D : Day) = struct
       let open Filename in
       let git = concat dir ".git" in
       let inputs = concat dir "input" in
-      if Sys.is_directory_exn git then concat inputs (sprintf "%d.txt" D.day)
+      if Sys.is_directory_exn git then concat inputs (sprintf "%02d.txt" D.day)
       else find_input_file (dirname dir)
     in
     Unix.getcwd () |> find_input_file |> In_channel.read_lines
