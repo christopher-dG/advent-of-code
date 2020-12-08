@@ -24,15 +24,20 @@ module Impl = Day.Make (struct
 
   let with_replaced instructions i =
     let instruction = instructions.(i) in
-    let () =
+    if
       match instruction with
-      | NoOp n -> instructions.(i) <- Jump n
-      | Jump _ -> instructions.(i) <- NoOp 0
-      | _ -> ()
-    in
-    let result = simulate instructions in
-    let () = instructions.(i) <- instruction in
-    match result with n, true -> Some n | _ -> None
+      | NoOp n ->
+          let () = instructions.(i) <- Jump n in
+          true
+      | Jump _ ->
+          let () = instructions.(i) <- NoOp 0 in
+          true
+      | _ -> false
+    then
+      let result = simulate instructions in
+      let () = instructions.(i) <- instruction in
+      match result with n, true -> Some n | _ -> None
+    else None
 
   module Out = Int
 
