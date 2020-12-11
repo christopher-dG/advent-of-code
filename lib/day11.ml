@@ -28,9 +28,8 @@ module Impl = Day.Make (struct
     let rec can_see_occupied floor (i, j) ~di ~dj =
       let i, j = (i + di, j + dj) in
       match is_occupied floor (i, j) with
+      | Some tf -> tf
       | None -> can_see_occupied floor (i, j) ~di ~dj
-      | Some true -> true
-      | Some false -> false
     in
     List.count adjacent ~f:(fun (di, dj) ->
         can_see_occupied floor (i, j) ~di ~dj)
