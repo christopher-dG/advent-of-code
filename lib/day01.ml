@@ -6,6 +6,7 @@ module Impl = Day.Make (struct
     | [] -> raise (Invalid_argument "No solution")
     | hd :: tl ->
         let comp = target - hd in
+        (* 12/09: `Set.exists` is probably O(n), `Set.mem set comp` is what we want. *)
         if Set.exists set ~f:(( = ) comp) then hd * comp
         else two_sum_product tl target set
 
@@ -17,6 +18,7 @@ module Impl = Day.Make (struct
       |> List.cartesian_product idxs
       |> List.filter ~f:(fun ((i, _), (j, _)) -> not (i = j))
       (* 12/04: `List.iter` should be used for side effects. *)
+      (* 12/09: `Hashtbl.create_mapped` is actually the right thing here. *)
       |> List.map ~f:(fun ((i, a), (j, b)) ->
              Hashtbl.add tbl ~key:(a + b) ~data:(i, j))
     in

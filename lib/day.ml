@@ -32,9 +32,14 @@ module Make (D : Day) = struct
 
   let part2 = D.part2
 
-  let%test "input" =
-    let ( = ) = D.Out.equal in
-    D.part1 lines = D.sol1 && D.part2 lines = D.sol2
+  let%test_module "input" =
+    ( module struct
+      let ( = ) = D.Out.equal
+
+      let%test "p1" = D.part1 lines = D.sol1
+
+      let%test "p2" = D.part2 lines = D.sol2
+    end )
 
   let%bench_module ("Day"[@name_suffix sprintf "%02d" D.day]) =
     ( module struct
