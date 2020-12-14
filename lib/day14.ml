@@ -27,10 +27,7 @@ module Impl = Day.Make (struct
     let masked =
       List.foldi mask ~init:0 ~f:(fun i acc m ->
           let n = Int.pow 2 i in
-          match m with
-          | One -> acc + n
-          | Zero -> acc
-          | X -> acc + Int.bit_and value n)
+          match m with One -> acc + n | Zero -> acc | X -> acc + (value land n))
     in
     Map.set mem ~key:address ~data:masked
 
@@ -39,16 +36,15 @@ module Impl = Day.Make (struct
       match bits with
       | [] -> acc
       | hd :: tl ->
-          let zeros = acc in
-          let ones = List.map acc ~f:(fun n -> n + Int.pow 2 hd) in
-          expand tl ~acc:(List.append zeros ones)
+          let ones = List.map acc ~f:(( + ) (Int.pow 2 hd)) in
+          expand tl ~acc:(acc @ ones)
     in
     let base, floats =
       List.foldi mask ~init:(0, []) ~f:(fun i (sum, floats) m ->
           let n = Int.pow 2 i in
           match m with
           | One -> (sum + n, floats)
-          | Zero -> (sum + Int.bit_and address n, floats)
+          | Zero -> (sum + (address land n), floats)
           | X -> (sum, i :: floats))
     in
     List.fold (expand floats) ~init:mem ~f:(fun mem n ->
