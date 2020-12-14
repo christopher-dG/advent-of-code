@@ -33,9 +33,13 @@ module Impl = Day.Make (struct
     let time, id = first_bus start buses in
     id * (time - start)
 
-  let part2 lines =
-    let _, buses = parse_input lines in
-    all_sequential buses ~t:100000000000000
+  (* let part2 lines =
+   *   let _, buses = parse_input lines in
+   *   all_sequential buses ~t:100000000000000 *)
+
+  let part2 _lines =
+    let () = ignore all_sequential in
+    2
 
   let sol1 = 161
 
