@@ -45,5 +45,19 @@ module Impl = Day.Make (struct
 
   let sol2 = 2
 
-  (* let%test "examples" = true *)
+  let%test "examples (p1)" =
+    let lines = [ "939"; "7,13,x,x,59,x,31,19" ] in
+    part1 lines = 295
+
+  (* let%test "examples (p2)" =
+   *   List.for_all
+   *     [
+   *       ("7,13,x,x,59,x,31,19", 1068781);
+   *       ("17,x,13,19", 3417);
+   *       ("67,7,59,61", 754018);
+   *       ("67,x,7,59,61", 1261476);
+   *       ("1789,37,47,1889", 1202161486);
+   *     ] ~f:(fun (line, ans) ->
+   *       let _, buses = parse_input [ "0"; line ] in
+   *       all_sequential buses = ans) *)
 end)
